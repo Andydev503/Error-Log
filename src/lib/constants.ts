@@ -115,19 +115,21 @@ export const STATUS_MAP: Record<ProblemStatus, string> = {
 /** Supabase Storage bucket that holds problem & answer screenshots. */
 export const IMAGE_BUCKET = "problem-images";
 
-/** Gemini models selectable for AI solutions (all have a free tier). */
+/** Gemini models selectable for AI solutions (vision-capable, free tier). */
 export const GEMINI_MODELS = [
-  { id: "gemini-2.5-flash", label: "2.5 Flash", hint: "Fast · recommended" },
-  { id: "gemini-2.5-pro", label: "2.5 Pro", hint: "Best reasoning · slower" },
-  { id: "gemini-2.5-flash-lite", label: "2.5 Flash-Lite", hint: "Fastest" },
-  { id: "gemini-2.0-flash", label: "2.0 Flash", hint: "Older, fast" },
+  { id: "gemini-3.5-flash", label: "3.5 Flash", hint: "Newest · recommended" },
+  { id: "gemini-3.1-pro-preview", label: "3.1 Pro", hint: "Best reasoning · slower" },
+  { id: "gemini-3.1-flash-lite", label: "3.1 Flash-Lite", hint: "Fastest" },
+  { id: "gemini-3-flash-preview", label: "3 Flash", hint: "Fast" },
+  { id: "gemini-2.5-flash", label: "2.5 Flash", hint: "Stable" },
+  { id: "gemini-2.5-pro", label: "2.5 Pro", hint: "Stable · strong" },
 ] as const;
 
 export type GeminiModelId = (typeof GEMINI_MODELS)[number]["id"];
 
 export const GEMINI_MODEL_IDS = GEMINI_MODELS.map((m) => m.id) as string[];
 
-export const DEFAULT_GEMINI_MODEL: GeminiModelId = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODEL: GeminiModelId = "gemini-3.5-flash";
 
 export function isGeminiModel(value: string): value is GeminiModelId {
   return GEMINI_MODEL_IDS.includes(value);
