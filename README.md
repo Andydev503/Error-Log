@@ -63,8 +63,12 @@ Fill in `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-GEMINI_API_KEY=your-gemini-key   # optional
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...   # the PUBLISHABLE key
+GEMINI_API_KEY=your-gemini-key                     # optional
+
+# Optional — only needed for the /admin page:
+ADMIN_EMAILS=you@example.com                       # your login email(s)
+SUPABASE_SECRET_KEY=sb_secret_...                  # server-only secret key
 ```
 
 ### 5. Run it
@@ -91,6 +95,18 @@ npm run build   # production build (also type-checks)
 npm run start   # serve the production build
 npm run lint    # ESLint
 ```
+
+## Admin & AI access
+
+- The **/admin** page (visible only to emails in `ADMIN_EMAILS`) lists every
+  account with sign-up date, last active, problem count, and AI usage. From
+  there you can toggle each user's AI access or remove the account. It needs
+  `SUPABASE_SECRET_KEY` set.
+- **AI generation is off by default for new sign-ups.** Accounts that already
+  existed when you ran the updated `schema.sql` are grandfathered on (so your
+  own account keeps AI). Admins always have AI.
+- Each AI generation can use a different **Gemini model**, chosen from a picker
+  next to the Generate button.
 
 ## Notes
 

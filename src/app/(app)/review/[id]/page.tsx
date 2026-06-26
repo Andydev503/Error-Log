@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getProblem } from "@/lib/data";
+import { canUseAi } from "@/lib/admin";
 import { ProblemDetail } from "@/components/ProblemDetail";
 
 export default async function ProblemPage({
@@ -10,7 +11,7 @@ export default async function ProblemPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const problem = await getProblem(id);
+  const [problem, canGenerate] = await Promise.all([getProblem(id), canUseAi()]);
   if (!problem) notFound();
 
   return (
@@ -21,7 +22,7 @@ export default async function ProblemPage({
       >
         <ArrowLeft size={16} /> Back to review
       </Link>
-      <ProblemDetail problem={problem} />
+      <ProblemDetail problem={problem} canGenerate={canGenerate} />
     </div>
   );
 }

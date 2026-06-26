@@ -66,7 +66,29 @@ users to `/login`. When Supabase env vars are absent
 ([`src/lib/supabase/config.ts`](src/lib/supabase/config.ts)), it routes
 everything to `/login`, which renders a setup notice instead of crashing.
 Authenticated pages live under the `src/app/(app)/` route group, whose layout
-double-checks `getUser()`.
+double-checks the user.
+
+**Always read the current user via [`getCurrentUser()`](src/lib/auth.ts)**, not
+`supabase.auth.getUser()` directly. It is wrapped in React `cache()` so the
+layout, page, and helpers share **one** auth round-trip per request — calling
+`getUser()` ad hoc reintroduces redundant network calls and is the main perf
+footgun here.
+
+### Admin & AI permissions
+
+- AI generation is a **per-account privilege**. The `profiles` table
+  (`ai_enabled`, `ai_generations`) gates it; new sign-ups default to `false`, a
+  signup trigger creates the row, and existing users are backfilled `true`. See
+  the profiles section of [`supabase/schema.sql`](supabase/schema.sql).
+- **Admins** are defined by the `ADMIN_EMAILS` env var (comma-separated), never
+  a DB flag — see [`src/lib/adminConfig.ts`](src/lib/adminConfig.ts). Admins
+  always have AI. [`canUseAi()`](src/lib/admin.ts) is the single source of truth
+  and is enforced server-side in the AI route, not just the UI.
+- The `/admin` page and `/api/admin/*` routes use a **secret-key** Supabase
+  client ([`src/lib/supabase/admin.ts`](src/lib/supabase/admin.ts)) that
+  bypasses RLS. Only ever instantiate it server-side behind an `isAdminEmail`
+  check. `SUPABASE_SECRET_KEY` is required for those features (graceful notice
+  if absent).
 
 ### Images
 

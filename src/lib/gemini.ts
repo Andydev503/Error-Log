@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
-import { SUBJECT_MAP, type SubjectId } from "./constants";
+import { SUBJECT_MAP, DEFAULT_GEMINI_MODEL, type SubjectId } from "./constants";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const FALLBACK_MODEL = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
 
 export function geminiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
@@ -41,12 +41,13 @@ export async function generateSolution(
   imageBytes: Uint8Array,
   mimeType: string,
   ctx: SolutionContext,
+  model?: string,
 ): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   const base64 = Buffer.from(imageBytes).toString("base64");
 
   const response = await ai.models.generateContent({
-    model: MODEL,
+    model: model || FALLBACK_MODEL,
     contents: [
       {
         role: "user",

@@ -94,3 +94,55 @@ create policy "images: owner delete" on storage.objects
     bucket_id = 'problem-images'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- ---------------------------------------------------------------------------
+-- Profiles: per-user AI permission + usage counter, for the admin page.
+-- New sign-ups get AI OFF by default; existing accounts are grandfathered ON.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.profiles (
+  id             uuid primary key references auth.users (id) on delete cascade,
+  email          text,
+  ai_enabled     boolean not null default false,
+  ai_generations integer not null default 0,
+  created_at     timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+-- A user may read their own profile (to know if AI is enabled). All writes
+-- happen server-side via the secret key (admin) or the usage RPC below.
+drop policy if exists "own profile read" on public.profiles;
+create policy "own profile read" on public.profiles
+  for select using (auth.uid() = id);
+
+-- Create a profile row automatically on sign-up (AI off by default).
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email)
+  values (new.id, new.email)
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Backfill anyone who signed up before this table existed, granting them AI.
+insert into public.profiles (id, email, ai_enabled)
+select id, email, true from auth.users
+on conflict (id) do nothing;
+
+-- Let an authenticated user bump only their own usage counter (not ai_enabled).
+create or replace function public.increment_ai_usage()
+returns void language sql security definer set search_path = public as $$
+  update public.profiles
+     set ai_generations = ai_generations + 1
+   where id = auth.uid();
+$$;
+
+grant execute on function public.increment_ai_usage() to authenticated;

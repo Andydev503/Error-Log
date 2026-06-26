@@ -39,6 +39,7 @@ export function ProblemImage({
           src={url}
           alt={alt}
           loading="lazy"
+          decoding="async"
           className={cn(
             "mx-auto w-full object-contain",
             maxHeightClass,

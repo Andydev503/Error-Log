@@ -8,21 +8,33 @@ import {
   LayoutDashboard,
   LogOut,
   PlusCircle,
+  Shield,
+  Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 
-const LINKS = [
+const BASE_LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/add", label: "Add problem", icon: PlusCircle, exact: false },
   { href: "/review", label: "Review", icon: BookOpen, exact: false },
+  { href: "/rapid", label: "Rapid review", icon: Zap, exact: false },
   { href: "/stats", label: "Stats", icon: BarChart3, exact: false },
 ];
 
-export function Nav({ email }: { email: string | null }) {
+export function Nav({
+  email,
+  isAdmin = false,
+}: {
+  email: string | null;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const LINKS = isAdmin
+    ? [...BASE_LINKS, { href: "/admin", label: "Admin", icon: Shield, exact: false }]
+    : BASE_LINKS;
 
   function isActive(href: string, exact: boolean) {
     return exact ? pathname === href : pathname.startsWith(href);

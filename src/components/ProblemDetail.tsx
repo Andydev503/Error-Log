@@ -17,13 +17,20 @@ import { IMAGE_BUCKET, STATUSES, type ProblemStatus } from "@/lib/constants";
 import { subjectTheme, statusBadge } from "@/lib/theme";
 import type { Problem } from "@/lib/types";
 import { publicImageUrl } from "@/lib/images";
+import { logReview } from "@/lib/reviews";
 import { cn, formatDate } from "@/lib/utils";
 import { SubjectBadge, CasBadge } from "./Badges";
 import { ProblemImage } from "./ProblemImage";
 import { AnswerReveal } from "./AnswerReveal";
 import { AiSolution } from "./AiSolution";
 
-export function ProblemDetail({ problem }: { problem: Problem }) {
+export function ProblemDetail({
+  problem,
+  canGenerate,
+}: {
+  problem: Problem;
+  canGenerate: boolean;
+}) {
   const router = useRouter();
   const [status, setStatus] = useState<ProblemStatus>(problem.status);
   const [reviews, setReviews] = useState(problem.times_reviewed);
@@ -42,36 +49,17 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     router.refresh();
   }
 
-  async function logReview(gotCorrect: boolean) {
+  async function handleReview(gotCorrect: boolean) {
     setBusy(true);
     const supabase = createClient();
-    const now = new Date().toISOString();
-    const nextCount = reviews + 1;
-    // Nudge status forward when a "learning/todo" problem is answered correctly.
-    const nextStatus: ProblemStatus =
-      gotCorrect && status !== "mastered"
-        ? status === "todo"
-          ? "learning"
-          : "mastered"
-        : status;
-
-    await supabase
-      .from("problems")
-      .update({
-        times_reviewed: nextCount,
-        last_reviewed_at: now,
-        status: nextStatus,
-      })
-      .eq("id", problem.id);
-    await supabase.from("reviews").insert({
-      problem_id: problem.id,
-      user_id: problem.user_id,
-      got_correct: gotCorrect,
-    });
-
-    setReviews(nextCount);
-    setLastReviewed(now);
-    setStatus(nextStatus);
+    const result = await logReview(
+      supabase,
+      { ...problem, status, times_reviewed: reviews },
+      gotCorrect,
+    );
+    setReviews(result.timesReviewed);
+    setLastReviewed(result.reviewedAt);
+    setStatus(result.status);
     setBusy(false);
     router.refresh();
   }
@@ -122,7 +110,11 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
           </div>
         )}
 
-        <AiSolution problemId={problem.id} initial={problem.ai_solution} />
+        <AiSolution
+          problemId={problem.id}
+          initial={problem.ai_solution}
+          canGenerate={canGenerate}
+        />
       </div>
 
       {/* Right: review controls + meta */}
@@ -131,7 +123,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
           <h3 className="mb-3 text-sm font-semibold">Did you get it this time?</h3>
           <div className="flex gap-2">
             <button
-              onClick={() => logReview(true)}
+              onClick={() => handleReview(true)}
               disabled={busy}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-60"
             >
@@ -143,7 +135,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               Got it
             </button>
             <button
-              onClick={() => logReview(false)}
+              onClick={() => handleReview(false)}
               disabled={busy}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium transition hover:bg-surface-2 disabled:opacity-60"
             >

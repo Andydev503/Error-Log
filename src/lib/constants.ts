@@ -114,3 +114,21 @@ export const STATUS_MAP: Record<ProblemStatus, string> = {
 
 /** Supabase Storage bucket that holds problem & answer screenshots. */
 export const IMAGE_BUCKET = "problem-images";
+
+/** Gemini models selectable for AI solutions (all have a free tier). */
+export const GEMINI_MODELS = [
+  { id: "gemini-2.5-flash", label: "2.5 Flash", hint: "Fast · recommended" },
+  { id: "gemini-2.5-pro", label: "2.5 Pro", hint: "Best reasoning · slower" },
+  { id: "gemini-2.5-flash-lite", label: "2.5 Flash-Lite", hint: "Fastest" },
+  { id: "gemini-2.0-flash", label: "2.0 Flash", hint: "Older, fast" },
+] as const;
+
+export type GeminiModelId = (typeof GEMINI_MODELS)[number]["id"];
+
+export const GEMINI_MODEL_IDS = GEMINI_MODELS.map((m) => m.id) as string[];
+
+export const DEFAULT_GEMINI_MODEL: GeminiModelId = "gemini-2.5-flash";
+
+export function isGeminiModel(value: string): value is GeminiModelId {
+  return GEMINI_MODEL_IDS.includes(value);
+}

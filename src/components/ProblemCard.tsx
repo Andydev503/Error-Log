@@ -19,6 +19,7 @@ export function ProblemCard({ problem }: { problem: Problem }) {
             src={url}
             alt="Problem"
             loading="lazy"
+            decoding="async"
             className="size-full object-cover transition group-hover:scale-[1.02]"
           />
         ) : (
